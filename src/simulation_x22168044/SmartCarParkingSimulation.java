@@ -43,10 +43,10 @@ public class SmartCarParkingSimulation {
 	static List<FogDevice> fogDevices = new ArrayList<FogDevice>();
     static List<Sensor> sensors = new ArrayList<Sensor>();
     static List<Actuator> actuators = new ArrayList<Actuator>();
-    static int numOfAreas = 16;
-    static int numOfCamerasPerArea = 64;
+    static int numOfAreas = 1;
+    static int numOfCamerasPerArea = 4;
     static double CAM_TRANSMISSION_TIME = 5;
-    private static boolean CLOUD = true;
+    private static boolean CLOUD = false;
     private static final double MAX_ALLOWED_ENERGY_CONSUMPTION = 100.0; //energy consumption unit
     private static final double MIN_REQUIRED_EFFICIENCY = 0.8; // a value between 0 and 1 indicating required efficiency
     
@@ -62,6 +62,16 @@ public class SmartCarParkingSimulation {
             FogBroker broker = new FogBroker("broker");
             Application application = createApplication(appId, broker.getId());
             application.setUserId(broker.getId());
+            
+            //executing pareto multi objective algorithm
+            List<DoubleSolution> nsgaIIResults = NSGAIIRunner.NSGAIIExecution();
+            
+            // Process and use the best NSGA-II result in the simulation
+            if (!nsgaIIResults.isEmpty()) {
+                DoubleSolution bestNSGAIISolution = getBestSolution(nsgaIIResults);
+                processAndUseNSGAIISolution(bestNSGAIISolution);
+            }
+            
             createFogDevices(broker.getId(), appId);
             Controller controller = null;
             ModuleMapping moduleMapping = ModuleMapping.createModuleMapping(); // initializing a module mapping
@@ -83,19 +93,13 @@ public class SmartCarParkingSimulation {
                 }
             }
             controller = new Controller("master-controller", fogDevices, sensors, actuators);
-
+            
             controller.submitApplication(application,
                     (CLOUD) ? (new ModulePlacementMapping(fogDevices, application, moduleMapping))
                             : (new ModulePlacementEdgewards(fogDevices, sensors, actuators, application, moduleMapping)));
-          
-            //executing pareto multi objective algorithm
-            List<DoubleSolution> nsgaIIResults = NSGAIIRunner.NSGAIIExecution();
             
-            // Process and use the best NSGA-II result in the simulation
-            if (!nsgaIIResults.isEmpty()) {
-                DoubleSolution bestNSGAIISolution = getBestSolution(nsgaIIResults);
-                processAndUseNSGAIISolution(bestNSGAIISolution);
-            }
+            startSimulation();
+            
         } catch (Exception e) {
             e.printStackTrace();
             Log.printLine("Unwanted errors happen");
@@ -123,7 +127,7 @@ public class SmartCarParkingSimulation {
             double efficiency = solution.objectives()[1];            // Maximize this value
             //update simulation parameters
             updateSimulationParameters(resourceAllocation, energyConsumption, efficiency);
-            startSimulation();
+            
         }
     }
 
@@ -152,10 +156,10 @@ public class SmartCarParkingSimulation {
             }
             
             if (energyConsumption < MAX_ALLOWED_ENERGY_CONSUMPTION && efficiency > MIN_REQUIRED_EFFICIENCY) {
-            	CLOUD = false;
+            	CLOUD = true;
                 System.out.println("Switching to cloud-based deployment for energy efficiency.");
             } else {
-                CLOUD = true;
+                CLOUD = false;
                 System.out.println("Continuing with edge-based deployment.");
             }
         }
