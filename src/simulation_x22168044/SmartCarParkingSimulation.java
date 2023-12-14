@@ -37,6 +37,7 @@ import org.fog.utils.distribution.DeterministicDistribution;
 import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 
 /**
+* Smart car parking simulation 
 * @author Shubham Gaur
 **/
 public class SmartCarParkingSimulation {
