@@ -44,7 +44,7 @@ public class SmartCarParkingSimulation {
     static List<Sensor> sensors = new ArrayList<Sensor>();
     static List<Actuator> actuators = new ArrayList<Actuator>();
     static int numOfAreas = 16;
-    static int numOfCamerasPerArea = 4;
+    static int numOfCamerasPerArea = 64;
     static double CAM_TRANSMISSION_TIME = 5;
     private static boolean CLOUD = true;
     private static final double MAX_ALLOWED_ENERGY_CONSUMPTION = 100.0; //energy consumption unit
@@ -109,6 +109,12 @@ public class SmartCarParkingSimulation {
     			.orElse(null);
     }
     
+    /**
+     * Gets the best solution from a list of solutions based on minimum energy consumption.
+     *
+     * @param solutions A list of solutions to choose from.
+     * @return The best solution with minimum energy consumption or null if the list is empty.
+     */
     private static void processAndUseNSGAIISolution(DoubleSolution solution) {
         if (solution != null) {
             // Extracting information from the NSGA-II solution
@@ -121,6 +127,13 @@ public class SmartCarParkingSimulation {
         }
     }
 
+    /**
+     * Updates simulation parameters based on resource allocation and efficiency.
+     *
+     * @param resourceAllocation The list of resource allocation values.
+     * @param energyConsumption The energy consumption value.
+     * @param efficiency The efficiency value.
+     */
     private static void updateSimulationParameters(List<Double> resourceAllocation, 
     		double energyConsumption, double efficiency) {
         // Update fog device characteristics based on resource allocation
@@ -129,20 +142,17 @@ public class SmartCarParkingSimulation {
             
             if (energyConsumption < MAX_ALLOWED_ENERGY_CONSUMPTION) {
                 // Decrease transmission time based on reduced energy consumption
-            	System.out.println("hello 1 ");
-                //CAM_TRANSMISSION_TIME *= (1 - energyConsumption / MAX_ALLOWED_ENERGY_CONSUMPTION);
+                CAM_TRANSMISSION_TIME *= (1 - energyConsumption / MAX_ALLOWED_ENERGY_CONSUMPTION);
             }
 
             if (efficiency > MIN_REQUIRED_EFFICIENCY) {
                 // Increase the number of areas or cameras for improved efficiency
-            	System.out.println("hello 2 ");
-            	//numOfAreas += numOfAreas ;
-                //numOfCamerasPerArea += 20;
+            	numOfAreas += numOfAreas ;
+                numOfCamerasPerArea += 20;
             }
             
             if (energyConsumption < MAX_ALLOWED_ENERGY_CONSUMPTION && efficiency > MIN_REQUIRED_EFFICIENCY) {
-            	System.out.println("hello 3 ");
-            	CLOUD = true;
+            	CLOUD = false;
                 System.out.println("Switching to cloud-based deployment for energy efficiency.");
             } else {
                 CLOUD = true;
@@ -151,6 +161,9 @@ public class SmartCarParkingSimulation {
         }
     }
     
+    /**
+     * Starts the simulation of the smart car parking system.
+     */
     private static void startSimulation() {
        try {
             Log.printLine("Starting smart car parking system simulation...");
@@ -165,7 +178,7 @@ public class SmartCarParkingSimulation {
     }
     
 	/**
-	 * Creates the fog devices in the physical topology of the simulation.
+	 * Creates the fog devices in the physical topology.
 	 * @param userId
 	 * @param appId
 	 */
